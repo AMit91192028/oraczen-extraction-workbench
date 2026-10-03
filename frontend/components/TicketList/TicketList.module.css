@@ -1,0 +1,195 @@
+/* ---------- Layout ---------- */
+.container {
+  width: 100%;
+  max-width: 880px;
+  margin-inline: auto;
+  padding: clamp(16px, 4vw, 48px);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: clamp(16px, 3vw, 28px);
+}
+
+.header h2 {
+  margin: 0;
+  font-size: clamp(1.4rem, 1.1rem + 1.4vw, 2rem);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+}
+
+.header p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: .95rem;
+}
+
+/* ---------- Actions ---------- */
+.actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.actions button {
+  padding: 9px 16px;
+  min-height: 40px;
+  font: inherit;
+  font-size: .9rem;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background-color .15s, border-color .15s, transform .1s;
+}
+
+.actions button:hover {
+  border-color: var(--accent);
+  background: var(--accent-tint);
+}
+
+.actions button:active { transform: translateY(1px); }
+
+.actions button:last-child {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+.actions button:last-child:hover { filter: brightness(1.08); }
+
+.actions button:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+.actions button:focus-visible,
+.checkbox input:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* ---------- Ticket list ---------- */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ticket {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: clamp(14px, 2.5vw, 20px);
+  box-shadow: var(--shadow);
+  transition: box-shadow .2s, border-color .2s, background-color .2s;
+}
+
+.ticket:hover { box-shadow: var(--shadow-hover); }
+
+.ticket::before {
+  content: "";
+  position: absolute;
+  inset: 12px auto 12px 0;
+  width: 4px;
+  border-radius: 0 4px 4px 0;
+  background: var(--accent);
+  opacity: 0;
+  transition: opacity .2s;
+}
+
+.selected,
+.ticket:has(input:checked) {
+  border-width: 2px;
+  border-color: var(--accent);
+  background: var(--accent-tint);
+}
+
+.selected::before,
+.ticket:has(input:checked)::before { opacity: 1; }
+
+/* ---------- Checkbox row ---------- */
+.checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.checkbox input {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin: 3px 0 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.checkbox span {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  font-weight: 600;
+  font-size: 1.05rem;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.checkbox small {
+  font-family: var(--mono);
+  font-size: .78rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+/* ---------- Body & metadata ---------- */
+.body {
+  margin: 12px 0 14px;
+  color: var(--muted);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-width: 68ch;
+}
+
+.metadata {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: .8rem;
+}
+
+.metadata > * {
+  padding: 3px 10px;
+  background: var(--chip);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 600px) {
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .actions { width: 100%; }
+  .actions button { flex: 1; }
+}
+
+@media (min-width: 1200px) {
+  .container { max-width: 960px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ticket,
+  .ticket::before,
+  .actions button { transition: none; }
+}
