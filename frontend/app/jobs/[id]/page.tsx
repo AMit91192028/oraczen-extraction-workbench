@@ -120,6 +120,23 @@ export default function JobPage() {
     },
   );
 
+  function formatStatus(status: string) {
+  switch (status) {
+    case "needs_review":
+      return "Needs review";
+    case "running":
+      return "Running";
+    case "queued":
+      return "Queued";
+    case "done":
+      return "Done";
+    case "failed":
+      return "Failed";
+    default:
+      return status;
+  }
+}
+
   return (
     <main>
       <h1>Extraction Job</h1>
@@ -151,33 +168,46 @@ export default function JobPage() {
       </section>
 
       <section>
-        <h2>Results</h2>
+  <h2>Ticket status</h2>
 
-        {sortedResults.length === 0 ? (
-          <p>No results yet...</p>
-        ) : (
-          <div>
-            {sortedResults.map((result) => {
-              const ticket = tickets.find(
-                (item) => item.id === result.ticket_id,
-              );
+  <div>
+    {job.items.map((item) => {
+      const ticket = tickets.find((ticket) => ticket.id === item.ticket_id);
 
-              if (!ticket) {
-                return null;
-              }
+      return (
+        <div key={item.ticket_id}>
+          <strong>{ticket?.subject || "(No subject)"}</strong>
+         <span> — {formatStatus(item.status)}</span>
+        </div>
+      );
+    })}
+  </div>
+</section>
 
-              return (
-                <ReviewRecord
-                  key={result.record_id}
-                  ticket={ticket}
-                  result={result}
-                  onUpdated={handleResultUpdated}
-                />
-              );
-            })}
-          </div>
-        )}
-      </section>
+<section>
+  <h2>Results</h2>
+
+  {sortedResults.length === 0 ? (
+    <p>No results yet...</p>
+  ) : (
+    <div>
+      {sortedResults.map((result) => {
+        const ticket = tickets.find((item) => item.id === result.ticket_id);
+
+        if (!ticket) return null;
+
+        return (
+          <ReviewRecord
+            key={result.record_id}
+            ticket={ticket}
+            result={result}
+            onUpdated={handleResultUpdated}
+          />
+        );
+      })}
+    </div>
+  )}
+</section>
     </main>
   );
 }
