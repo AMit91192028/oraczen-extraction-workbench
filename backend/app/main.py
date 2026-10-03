@@ -1,18 +1,27 @@
 import csv
 import io
 from pathlib import Path
-from app.config import settings
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from pydantic import BaseModel, ValidationError
 
+from app.config import settings
 from app.job_manager import JobManager
 from app.schemas import ExtractionRecord
 from app.tickets import load_tickets
 
 
 app = FastAPI(title="Extraction Workbench")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[settings.cors_origin],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 TICKETS_PATH = PROJECT_ROOT / "data" / "tickets.jsonl"
@@ -28,11 +37,14 @@ job_manager = JobManager(
 class CreateJobRequest(BaseModel):
     ticket_ids: list[str]
 
-
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
 
+
+@app.get("/api/tickets")
+def get_tickets():
+    return tickets
 
 @app.post("/api/jobs", status_code=202)
 async def create_job(

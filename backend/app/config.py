@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     )
 
     provider: str = "mock"
-    mock_delay_ms: int = 400
+    mock_delay_ms: int = 1000
     max_concurrency: int = 5
     cors_origin: str = "http://localhost:3000"
     tickets_path: str = "data/tickets.jsonl"
