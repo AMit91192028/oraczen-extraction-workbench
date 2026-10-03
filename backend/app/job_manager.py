@@ -10,9 +10,9 @@ from app.extraction import ExtractionService
 @dataclass
 class JobItem:
     ticket_id: str
+    record_id: str = field(default_factory=lambda: str(uuid4()))
     status: str = "queued"
     result: dict[str, Any] | None = None
-
 
 @dataclass
 class Job:

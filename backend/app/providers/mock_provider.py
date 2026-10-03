@@ -2,16 +2,29 @@ import re
 import time
 
 from app.provider import ExtractionProvider
+from app.config import settings
+
+DEFAULT_PRODUCT = "Zen Orchestrator"
+DEFAULT_CATEGORY = "bug"
+DEFAULT_SEVERITY = "medium"
+DEFAULT_ACTION = "none"
 
 
 class MockProvider:
+    def __init__(self, delay_ms: int | None = None):
+        self.delay_ms = (
+            settings.mock_delay_ms
+            if delay_ms is None
+            else delay_ms
+        )
+
     def extract(
         self,
         ticket: dict,
         attempt: int = 1,
         validation_error: str | None = None,
     ) -> dict:
-        time.sleep(0.1)
+        time.sleep(self.delay_ms / 1000)
 
         ticket_id = ticket["id"]
         subject = ticket.get("subject", "")
@@ -24,24 +37,36 @@ class MockProvider:
         if ticket_id == "tkt_0060":
             return self._invalid_record()
 
+        product = self._product_from_text(text)
+        category = self._category_from_text(text)
+        severity = self._severity_from_text(text)
+        action = self._requested_action_from_text(text)
+
+        # The schema has no "unknown" value, so a missing field must still be a
+        # valid enum. Fall back to a neutral default and FLAG it as uncertain
+        # instead of returning None (None fails validation twice -> needs_review).
+        uncertain_fields = []
+        if product is None:
+            product, _ = DEFAULT_PRODUCT, uncertain_fields.append("product")
+        if category is None:
+            category, _ = DEFAULT_CATEGORY, uncertain_fields.append("category")
+        if severity is None:
+            severity, _ = DEFAULT_SEVERITY, uncertain_fields.append("severity")
+        if action is None:
+            action, _ = DEFAULT_ACTION, uncertain_fields.append("requested_action")
+
         record = {
             "company": self._company_from_ticket(ticket),
-            "product": self._product_from_text(text),
-            "category": self._category_from_text(text),
-            "severity": self._severity_from_text(text),
-            "requested_action": self._requested_action_from_text(text),
+            "product": product,
+            "category": category,
+            "severity": severity,
+            "requested_action": action,
             "refund_amount": self._refund_amount_from_text(text),
             "deadline": None,
             "escalated": self._is_escalated(text),
         }
 
-        uncertain_fields = []
-
-        for field in ["product", "category", "severity", "requested_action"]:
-            if record[field] is None:
-                uncertain_fields.append(field)
-
-        if "eur" in text or "€" in text:
+        if re.search(r"\beur\b|\beuros?\b|€", text):
             uncertain_fields.append("refund_amount")
 
         return {
@@ -50,22 +75,22 @@ class MockProvider:
         }
 
     def _category_from_text(self, text: str) -> str | None:
-        if "outage" in text or "service is down" in text or "system is down" in text:
-            return "outage"
-
-        if "invoice" in text or "billing" in text or "charged" in text:
-            return "billing"
-
-        if "feature" in text or "would like" in text or "request" in text:
-            return "feature_request"
-
-        if "how do i" in text or "how can i" in text:
-            return "how_to"
-
-        if "renew" in text or "non-renew" in text:
+        if re.search(r"non-?renew|not renew|cancel|switch(ing)? to|churn", text):
             return "churn_risk"
 
-        if "bug" in text or "error" in text or "broken" in text:
+        if re.search(r"outage|service is down|system is down|production is down|completely down", text):
+            return "outage"
+
+        if re.search(r"invoice|billing|charged|overcharg|refund|payment", text):
+            return "billing"
+
+        if re.search(r"how do i|how can i|how to|does .* count|is it possible", text):
+            return "how_to"
+
+        if re.search(r"feature request|would like|wish|it would be great|add support", text):
+            return "feature_request"
+
+        if re.search(r"\bbug\b|error|broken|crash|fails?\b|not working", text):
             return "bug"
 
         return None
@@ -75,6 +100,7 @@ class MockProvider:
             "critical" in text
             or "production is down" in text
             or "entire service is down" in text
+            or "completely down" in text
         ):
             return "critical"
 
@@ -115,12 +141,19 @@ class MockProvider:
         return None
 
     def _refund_amount_from_text(self, text: str) -> float | None:
-        match = re.search(r"\$\s*([\d,]+(?:\.\d+)?)", text)
+        refund_context = re.search(
+            r"(?:refund|reimburse|reimbursement|refunded)"
+            r".{0,80}"
+            r"\$\s*([\d,]+(?:\.\d+)?)",
+            text,
+        )
 
-        if not match:
+        if not refund_context:
             return None
 
-        return float(match.group(1).replace(",", ""))
+        return float(
+            refund_context.group(1).replace(",", "")
+        )
 
     def _product_from_text(self, text: str) -> str | None:
         if "zen orchestrator" in text:

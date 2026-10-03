@@ -4,6 +4,14 @@ from app.providers.mock_provider import MockProvider
 from app.schemas import ExtractionRecord
 
 
+# Review reasons that force needs_review even though the record is valid
+# (currency mismatch, multi-issue ticket). Churn threats are only flagged.
+BLOCKING_PREFIXES = (
+    "Refund amount is in EUR",
+    "Ticket contains multiple issues",
+)
+
+
 class ExtractionService:
     def __init__(self, provider=None):
         self.provider = provider or MockProvider()
@@ -40,9 +48,22 @@ class ExtractionService:
                     output["record"]
                 )
 
+                # A valid record is not automatically a trusted one: tickets
+                # that need a human judgement call are routed to review,
+                # but we KEEP the validated record so the reviewer edits it
+                # instead of starting from nothing.
+                needs_human = any(
+                    reason.startswith(BLOCKING_PREFIXES)
+                    for reason in review_reasons
+                )
+
                 return {
-                    "status": "done",
-                    "reason": None,
+                    "status": "needs_review" if needs_human else "done",
+                    "reason": (
+                        "Ticket needs a human decision"
+                        if needs_human
+                        else None
+                    ),
                     "record": record.model_dump(mode="json"),
                     "raw_output": output,
                     "uncertain_fields": output.get(
