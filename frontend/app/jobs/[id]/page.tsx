@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 
-import { getJob, getJobResults } from "@/lib/api";
+import { getExportUrl, getJob, getJobResults } from "@/lib/api";
 import ReviewRecord from "@/components/ReviewRecord/ReviewRecord";
 import type { Job, JobResult, Ticket } from "@/lib/types";
 import { getTickets } from "@/lib/api";
@@ -145,6 +145,12 @@ export default function JobPage() {
         Job ID: <code>{job.job_id}</code>
       </p>
 
+        <div>
+        <a href={getExportUrl(job.job_id)} download>
+            Export CSV
+        </a>
+        </div>
+        
       <section>
         <h2>Progress</h2>
 
