@@ -122,6 +122,38 @@
   border-radius: var(--radius-sm);
 }
 
+.searchSection {
+  margin: 1rem 0 1.25rem;
+}
+
+.searchLabel {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.searchInput {
+  width: 100%;
+  max-width: 520px;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: white;
+  font-size: 0.95rem;
+  outline: none;
+}
+
+.searchInput:focus {
+  border-color: #6b7280;
+  box-shadow: 0 0 0 3px rgba(107, 114, 128, 0.15);
+}
+
+.searchCount {
+  margin: 0.6rem 0 1rem;
+  font-size: 0.85rem;
+  color: #6b7280;
+}
 /* ---------- Responsive ---------- */
 @media (max-width: 520px) {
   .toolbar {
