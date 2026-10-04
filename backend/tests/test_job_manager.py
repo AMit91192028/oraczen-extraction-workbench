@@ -1,3 +1,6 @@
+import asyncio
+
+from app.extraction import ExtractionService
 from app.job_manager import JobManager
 
 
@@ -104,3 +107,87 @@ def test_job_flips_to_done_after_processing():
     assert progress["done"] == 2
     assert progress["failed"] == 0
     assert progress["needs_review"] == 0
+
+
+class FlakyProvider:
+    """Always returns an invalid record for tkt_bad, a valid one otherwise."""
+
+    def __init__(self):
+        self.calls = []
+
+    def extract(self, ticket, attempt=1, validation_error=None):
+        self.calls.append(
+            (ticket["id"], attempt, validation_error)
+        )
+
+        severity = "urgent" if ticket["id"] == "tkt_bad" else "high"
+
+        return {
+            "record": {
+                "company": "Acme",
+                "product": "Zen Studio",
+                "category": "bug",
+                "severity": severity,
+                "requested_action": "fix",
+                "refund_amount": None,
+                "deadline": None,
+                "escalated": False,
+            },
+            "uncertain_fields": [],
+        }
+
+
+def test_item_failing_twice_lands_in_needs_review_and_job_completes():
+    provider = FlakyProvider()
+    manager = JobManager(
+        extraction_service=ExtractionService(provider),
+        max_concurrency=2,
+    )
+
+    tickets = {
+        "tkt_bad": {
+            "id": "tkt_bad",
+            "subject": "Broken thing",
+            "body": "Zen Studio crashes on export.",
+            "from_email": "a@acme.com",
+        },
+        "tkt_good": {
+            "id": "tkt_good",
+            "subject": "Broken other thing",
+            "body": "Zen Studio crashes on import.",
+            "from_email": "b@acme.com",
+        },
+    }
+
+    job = manager.create_job(["tkt_bad", "tkt_good"])
+
+    asyncio.run(manager.process_job(job.id, tickets))
+
+    bad_item, good_item = job.items
+
+    # The job finished even though one ticket failed validation twice.
+    assert job.state == "done"
+
+    # The bad ticket was retried exactly once, and the validation error
+    # from attempt 1 was fed back into attempt 2.
+    bad_calls = [c for c in provider.calls if c[0] == "tkt_bad"]
+    assert [c[1] for c in bad_calls] == [1, 2]
+    assert bad_calls[0][2] is None
+    assert "severity" in bad_calls[1][2]
+
+    # It is parked for review with the raw model output kept.
+    assert bad_item.status == "needs_review"
+    assert bad_item.result["record"] is None
+    assert bad_item.result["raw_output"] is not None
+    assert "validation_error" in bad_item.result
+
+    # The healthy ticket was not affected.
+    assert good_item.status == "done"
+
+    assert manager.get_progress(job.id) == {
+        "queued": 0,
+        "running": 0,
+        "done": 1,
+        "failed": 0,
+        "needs_review": 1,
+    }
