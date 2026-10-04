@@ -1,0 +1,125 @@
+/* Uses tokens from globals.css. Class-based selectors only (CSS Modules safe). */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ---------- One field ---------- */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.field:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-tint);
+}
+
+.fieldInvalid {
+  border-color: var(--danger);
+  background: var(--danger-tint);
+}
+
+.label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.input,
+.select {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 1rem; /* 16px prevents iOS zoom on focus */
+  color: var(--ink);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+
+.input:focus,
+.select:focus {
+  border-color: var(--accent);
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-tint);
+}
+
+.input:focus-visible,
+.select:focus-visible,
+.save:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* ---------- Hints and errors ---------- */
+.modelSaid {
+  margin: 0;
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  color: var(--warn);
+  background: var(--warn-tint);
+  border: 1px solid var(--warn-line);
+  border-radius: var(--radius-sm);
+}
+
+.error {
+  margin: 0;
+  padding: 6px 10px;
+  font-size: 0.82rem;
+  color: var(--danger);
+  background: var(--danger-tint);
+  border-radius: var(--radius-sm);
+}
+
+/* ---------- Save button ---------- */
+.save {
+  align-self: flex-start;
+  min-height: 40px;
+  padding: 8px 18px;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--accent-ink);
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: filter 0.15s;
+}
+
+.save:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.save:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 480px) {
+  .save {
+    align-self: stretch;
+    min-height: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .field,
+  .save {
+    transition: none;
+  }
+}
