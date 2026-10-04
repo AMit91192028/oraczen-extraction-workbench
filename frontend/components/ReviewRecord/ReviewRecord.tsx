@@ -9,6 +9,7 @@ import type {
 } from "@/lib/types";
 
 import { fieldErrorsFromError, updateRecord } from "@/lib/api";
+import { formatDate, statusTone, titleCase } from "@/lib/format";
 import EditableField from "../EditableField/EditableField";
 import ManualRecordForm from "../ManualrecordForm/ManualrecordForm";
 
@@ -86,6 +87,42 @@ export default function ReviewRecord({
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const record = result.result.record;
+  const editedFields: string[] = result.result.human_edited_fields ?? [];
+
+  const header = (
+    <header className={styles.header}>
+      <div className={styles.headerText}>
+        <h3 className={styles.subject}>{ticket.subject || "(No subject)"}</h3>
+
+        <div className={styles.metadata}>
+          <span className="pill" data-tone="accent">
+            {titleCase(ticket.channel)}
+          </span>
+          <span className="pill">{ticket.from_email}</span>
+          <span className="pill">{formatDate(ticket.received_at)}</span>
+          <span className={`pill ${styles.id}`}>{ticket.id}</span>
+        </div>
+      </div>
+
+      <div className={styles.statusPills}>
+        {editedFields.length > 0 && (
+          <span className="pill" data-tone="accent">
+            Human edited
+          </span>
+        )}
+        <span className="pill" data-tone={statusTone(result.status)}>
+          {titleCase(result.status)}
+        </span>
+      </div>
+    </header>
+  );
+
+  const original = (
+    <section className={styles.ticket}>
+      <h4 className={styles.label}>Original message</h4>
+      <p className={styles.body}>{ticket.body}</p>
+    </section>
+  );
 
   if (!record) {
     const rawRecord =
@@ -94,53 +131,42 @@ export default function ReviewRecord({
         | undefined) ?? null;
 
     return (
-      <article className={styles.container}>
-        <section className={styles.ticket}>
-          <h3 className={styles.label}>Original ticket</h3>
-          <h4 className={styles.subject}>
-            {ticket.subject || "(No subject)"}
-          </h4>
-          <p className={styles.body}>{ticket.body}</p>
+      <article className={styles.card}>
+        {header}
 
-          <div className={styles.metadata}>
-            <span>{ticket.from_email}</span>
-            <span>{ticket.channel}</span>
-            <span>{ticket.received_at}</span>
-          </div>
-        </section>
+        <div className={styles.columns}>
+          {original}
 
-        <section className={styles.result}>
-          <div className={styles.resultHeader}>
-            <h3 className={styles.label}>Extracted record</h3>
-            <span className={styles.badge}>Needs review</span>
-          </div>
+          <section className={styles.result}>
+            <h4 className={styles.label}>Extracted record</h4>
 
-          <p className={styles.reason}>
-            {result.result.reason ||
-              "No valid extracted record was produced."}
-          </p>
+            <p className={styles.reason}>
+              {result.result.reason ||
+                "No valid extracted record was produced. Fill in the fields below."}
+            </p>
 
-          {result.result.validation_error && (
-            <pre>{result.result.validation_error}</pre>
-          )}
+            {result.result.validation_error && (
+              <pre>{result.result.validation_error}</pre>
+            )}
 
-          <ManualRecordForm
-            recordId={result.record_id}
-            fields={FIELDS}
-            rawRecord={rawRecord}
-            onSaved={(savedRecord, humanEditedFields) =>
-              onUpdated({
-                ...result,
-                status: "done",
-                result: {
-                  ...result.result,
-                  record: savedRecord,
-                  human_edited_fields: humanEditedFields,
-                },
-              })
-            }
-          />
-        </section>
+            <ManualRecordForm
+              recordId={result.record_id}
+              fields={FIELDS}
+              rawRecord={rawRecord}
+              onSaved={(savedRecord, humanEditedFields) =>
+                onUpdated({
+                  ...result,
+                  status: "done",
+                  result: {
+                    ...result.result,
+                    record: savedRecord,
+                    human_edited_fields: humanEditedFields,
+                  },
+                })
+              }
+            />
+          </section>
+        </div>
       </article>
     );
   }
@@ -148,7 +174,7 @@ export default function ReviewRecord({
   async function saveField(
     field: keyof ExtractionRecord,
     value: string | number | boolean | null,
-  ) {
+  ): Promise<boolean> {
     try {
       setErrors((current) => ({ ...current, [field]: "" }));
 
@@ -158,87 +184,70 @@ export default function ReviewRecord({
 
       onUpdated({
         ...result,
+        status: updated.status,
         result: {
           ...result.result,
           record: updated.record,
           human_edited_fields: updated.human_edited_fields,
         },
       });
+
+      return true;
     } catch (error) {
       const fieldErrors = fieldErrorsFromError(error);
 
       setErrors((current) => ({
         ...current,
         [field]:
-          fieldErrors[field] ??
-          fieldErrors._form ??
-          "Failed to save field",
+          fieldErrors[field] ?? fieldErrors._form ?? "Failed to save field",
       }));
+
+      return false;
     }
   }
 
-  const uncertainFields: string[] =
-    result.result.uncertain_fields ?? [];
-  const editedFields: string[] =
-    result.result.human_edited_fields ?? [];
-  const reviewReasons: string[] =
-    result.result.review_reasons ?? [];
+  const uncertainFields: string[] = result.result.uncertain_fields ?? [];
+  const reviewReasons: string[] = result.result.review_reasons ?? [];
 
   return (
-    <article className={styles.container}>
-      <section className={styles.ticket}>
-        <h3 className={styles.label}>Original ticket</h3>
+    <article className={styles.card}>
+      {header}
 
-        <h4 className={styles.subject}>
-          {ticket.subject || "(No subject)"}
-        </h4>
+      <div className={styles.columns}>
+        {original}
 
-        <p className={styles.body}>{ticket.body}</p>
+        <section className={styles.result}>
+          <h4 className={styles.label}>Extracted record</h4>
 
-        <div className={styles.metadata}>
-          <span>{ticket.from_email}</span>
-          <span>{ticket.channel}</span>
-          <span>{ticket.received_at}</span>
-        </div>
-      </section>
+          {reviewReasons.length > 0 && (
+            <div className={styles.reviewReasons}>
+              <strong>Why this needs a look</strong>
 
-      <section className={styles.result}>
-        <div className={styles.resultHeader}>
-          <h3 className={styles.label}>Extracted record</h3>
-
-          {result.status === "needs_review" && (
-            <span className={styles.badge}>Needs review</span>
+              <ul>
+                {reviewReasons.map((reason, index) => (
+                  <li key={`${reason}-${index}`}>{reason}</li>
+                ))}
+              </ul>
+            </div>
           )}
-        </div>
 
-        {reviewReasons.length > 0 && (
-          <div className={styles.reviewReasons}>
-            <strong>Review reasons</strong>
-
-            <ul>
-              {reviewReasons.map((reason, index) => (
-                <li key={`${reason}-${index}`}>{reason}</li>
-              ))}
-            </ul>
+          <div className={styles.fields}>
+            {FIELDS.map((field) => (
+              <EditableField
+                key={field.key}
+                label={field.label}
+                value={record[field.key] as string | number | boolean | null}
+                type={field.type}
+                options={field.options}
+                uncertain={uncertainFields.includes(field.key)}
+                edited={editedFields.includes(field.key)}
+                error={errors[field.key]}
+                onSave={(value) => saveField(field.key, value)}
+              />
+            ))}
           </div>
-        )}
-
-        <div className={styles.fields}>
-          {FIELDS.map((field) => (
-            <EditableField
-              key={field.key}
-              label={field.label}
-              value={record[field.key] as string | number | boolean | null}
-              type={field.type}
-              options={field.options}
-              uncertain={uncertainFields.includes(field.key)}
-              edited={editedFields.includes(field.key)}
-              error={errors[field.key]}
-              onSave={(value) => saveField(field.key, value)}
-            />
-          ))}
-        </div>
-      </section>
+        </section>
+      </div>
     </article>
   );
 }

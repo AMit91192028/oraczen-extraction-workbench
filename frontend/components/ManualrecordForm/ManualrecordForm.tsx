@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { fieldErrorsFromError, updateRecord } from "@/lib/api";
+import { titleCase } from "@/lib/format";
 import type { ExtractionRecord } from "@/lib/types";
 
 import styles from "./Manualrecordform.module.css";
@@ -135,7 +136,7 @@ export default function ManualRecordForm({
                 <option value="">— choose —</option>
                 {field.options?.map((option) => (
                   <option key={option} value={option}>
-                    {option}
+                    {titleCase(option)}
                   </option>
                 ))}
               </select>
@@ -146,8 +147,8 @@ export default function ManualRecordForm({
                 value={draft[field.key]}
                 onChange={(e) => setValue(field.key, e.target.value)}
               >
-                <option value="true">true</option>
-                <option value="false">false</option>
+                <option value="true">Yes</option>
+                <option value="false">No</option>
               </select>
             ) : (
               <input

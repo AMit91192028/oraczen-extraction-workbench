@@ -1,87 +1,211 @@
-/* ---------- Design tokens ---------- */
+/* ==========================================================
+   Design tokens + shared building blocks
+   (buttons, pills, filter chips, form controls)
+   ========================================================== */
 :root {
-  --bg: #eef1f5;
+  --bg: #f4f5f8;
   --surface: #ffffff;
-  --ink: #141a24;
-  --muted: #586274;
-  --line: #d9dfe8;
-  --accent: #1f5eff;
+  --surface-2: #f8f9fb;
+  --ink: #1a2230;
+  --muted: #5a6577;
+  --line: #e1e5ec;
+  --line-strong: #c9d0dc;
+
+  --accent: #0b6e66;
+  --accent-hover: #095a54;
   --accent-ink: #ffffff;
-  --accent-tint: #edf2ff;
-  --chip: #f1f4f8;
-  --focus: #1f5eff;
-  --radius: 12px;
-  --radius-sm: 8px;
-  --shadow: 0 1px 2px rgba(20, 26, 36, .06), 0 4px 14px rgba(20, 26, 36, .05);
-  --shadow-hover: 0 2px 4px rgba(20, 26, 36, .08), 0 10px 24px rgba(20, 26, 36, .09);
-  --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  --warn: #9a5b00;
-  --warn-tint: #fff6e5;
-  --warn-line: #f0d9a8;
-  --code-bg: #f4f6fa;
-  --danger: #c62828;
-  --danger-tint: #fdecec;
+  --accent-tint: #e4f3f1;
+  --focus: #0b6e66;
+
+  --chip: #eef1f5;
+
+  --success: #17703f;
+  --success-tint: #e6f5ec;
+  --success-line: #b5e0c5;
+  --warn: #8a5100;
+  --warn-tint: #fff4dc;
+  --warn-line: #f1d79c;
+  --danger: #b42318;
+  --danger-tint: #fdecea;
+  --danger-line: #f5b9b3;
+
+  --code-bg: #f1f3f7;
+
+  --radius: 14px;
+  --radius-sm: 10px;
+  --shadow: 0 1px 2px rgba(20, 28, 40, 0.05), 0 4px 16px rgba(20, 28, 40, 0.04);
+  --shadow-hover: 0 2px 4px rgba(20, 28, 40, 0.07), 0 10px 24px rgba(20, 28, 40, 0.08);
+
+  --font: var(--font-geist-sans), system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Consolas,
+    monospace;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #0e1218;
-    --surface: #171d27;
-    --ink: #eaeef5;
-    --muted: #98a3b5;
-    --line: #2a3342;
-    --accent: #6c97ff;
-    --accent-ink: #0e1218;
-    --accent-tint: #1a2540;
-    --chip: #202938;
-    --focus: #8fb0ff;
-    --shadow: 0 1px 2px rgba(0, 0, 0, .4);
-    --shadow-hover: 0 8px 24px rgba(0, 0, 0, .45);
-    --warn: #f5b35a;
-    --warn-tint: #2b2210;
-    --warn-line: #5a4519;
-    --code-bg: #0f141c;
-    --danger: #ff8a8a;
-    --danger-tint: #2d1517;
-  }
-}
+  :root {
+    --bg: #0f141b;
+    --surface: #171e27;
+    --surface-2: #1c242f;
+    --ink: #e8edf3;
+    --muted: #a0abbb;
+    --line: #28313d;
+    --line-strong: #3a4554;
 
-:root[data-theme="dark"] {
-  --bg: #0e1218;
-  --surface: #171d27;
-  --ink: #eaeef5;
-  --muted: #98a3b5;
-  --line: #2a3342;
-  --accent: #6c97ff;
-  --accent-ink: #0e1218;
-  --accent-tint: #1a2540;
-  --chip: #202938;
-  --focus: #8fb0ff;
-  --shadow: 0 1px 2px rgba(0, 0, 0, .4);
-  --shadow-hover: 0 8px 24px rgba(0, 0, 0, .45);
-  --warn: #f5b35a;
-  --warn-tint: #2b2210;
-  --warn-line: #5a4519;
-  --code-bg: #0f141c;
-  --danger: #ff8a8a;
-  --danger-tint: #2d1517;
+    --accent: #4fd1c0;
+    --accent-hover: #7be0d2;
+    --accent-ink: #062320;
+    --accent-tint: #123230;
+    --focus: #7be0d2;
+
+    --chip: #202935;
+
+    --success: #6fd49a;
+    --success-tint: #13291d;
+    --success-line: #25513a;
+    --warn: #f3b865;
+    --warn-tint: #2a2112;
+    --warn-line: #5a4519;
+    --danger: #ff9a92;
+    --danger-tint: #2d1715;
+    --danger-line: #6a2c27;
+
+    --code-bg: #121921;
+
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+    --shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.45);
+  }
 }
 
 /* ---------- Base ---------- */
 *, *::before, *::after { box-sizing: border-box; }
 
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+
 body {
   margin: 0;
-  padding: 2rem;
   background: var(--bg);
   color: var(--ink);
   font-family: var(--font);
-  font-size: 1rem;
-  line-height: 1.55;
+  font-size: 1rem;          /* 16px base */
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
 }
 
+h1, h2, h3, h4, p { margin: 0; }
+
+a { color: var(--accent); }
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* ---------- Buttons ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0.5rem 1.1rem;
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color 0.15s, border-color 0.15s, transform 0.1s;
+}
+.btn:hover:not(:disabled) { border-color: var(--accent); background: var(--accent-tint); }
+.btn:active:not(:disabled) { transform: translateY(1px); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-primary {
+  color: var(--accent-ink);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.btn-primary:hover:not(:disabled) {
+  color: var(--accent-ink);
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+.btn-sm { min-height: 38px; padding: 0.3rem 0.9rem; font-size: 0.875rem; }
+
+/* ---------- Pills (status / meta) ---------- */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.1rem 0.65rem;
+  font-size: 0.8125rem;      /* 13px */
+  font-weight: 600;
+  line-height: 1.6;
+  color: var(--muted);
+  background: var(--chip);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.pill[data-tone="success"] { color: var(--success); background: var(--success-tint); border-color: var(--success-line); }
+.pill[data-tone="warn"]    { color: var(--warn);    background: var(--warn-tint);    border-color: var(--warn-line); }
+.pill[data-tone="danger"]  { color: var(--danger);  background: var(--danger-tint);  border-color: var(--danger-line); }
+.pill[data-tone="accent"]  { color: var(--accent);  background: var(--accent-tint);  border-color: var(--accent); }
+
+/* ---------- Filter chips (toggle buttons) ---------- */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 40px;
+  padding: 0.3rem 0.9rem;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+.chip:hover { border-color: var(--accent); background: var(--accent-tint); }
+.chip[aria-pressed="true"] {
+  color: var(--accent-ink);
+  background: var(--accent);
+  border-color: var(--accent);
+  font-weight: 600;
+}
+.chip-count {
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.75;
+}
+
+/* ---------- Form controls ---------- */
+.control {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.55rem 0.8rem;
+  font: inherit;
+  font-size: 1rem;           /* 16px also stops iOS zoom-on-focus */
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+}
+.control::placeholder { color: var(--muted); opacity: 1; }
+.control:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--accent-tint); }
+.control:focus-visible { outline: 3px solid var(--focus); outline-offset: 1px; box-shadow: none; }
+
+/* ---------- Motion ---------- */
 @media (prefers-reduced-motion: reduce) {
-  * { transition: none !important; }
+  *, *::before, *::after { transition: none !important; animation: none !important; }
 }

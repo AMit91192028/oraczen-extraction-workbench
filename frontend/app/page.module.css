@@ -1,56 +1,50 @@
-/* Uses tokens from globals.css. Class-based selectors only (CSS Modules safe). */
-
 .page {
   width: 100%;
   max-width: 960px;
   margin-inline: auto;
   padding: clamp(16px, 4vw, 48px);
+  padding-bottom: clamp(32px, 6vw, 72px);
   display: flex;
   flex-direction: column;
-  gap: clamp(16px, 3vw, 28px);
+  gap: clamp(16px, 2.5vw, 24px);
 }
 
-/* ---------- Hero ---------- */
+/* ---------- Header ---------- */
 .hero {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.eyebrow {
-  margin: 0;
-  font-size: 0.75rem;
+.brand {
+  font-size: 0.9375rem;
   font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
   color: var(--accent);
 }
 
 .title {
-  margin: 0;
-  font-size: clamp(1.75rem, 1.2rem + 2.4vw, 2.75rem);
-  line-height: 1.1;
-  letter-spacing: -0.03em;
-  font-weight: 800;
+  font-size: clamp(1.75rem, 1.3rem + 2vw, 2.5rem);
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  font-weight: 750;
 }
 
 .subtitle {
-  margin: 0;
-  max-width: 56ch;
-  font-size: clamp(0.95rem, 0.9rem + 0.3vw, 1.1rem);
+  max-width: 62ch;
+  font-size: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
   color: var(--muted);
 }
 
-/* ---------- Toolbar ---------- */
+/* ---------- Sticky action bar ---------- */
 .toolbar {
   position: sticky;
-  top: env(safe-area-inset-top, 0px);
+  top: 8px;
   z-index: 10;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 12px 16px;
+  padding: 10px 10px 10px 18px;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -58,118 +52,80 @@
 }
 
 .selectedCount {
-  margin: 0;
-  font-size: 0.9rem;
+  font-size: 1rem;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
 
 .selectedCount strong {
   color: var(--ink);
+  font-size: 1.125rem;
 }
 
-.primary {
-  min-height: 42px;
-  padding: 9px 20px;
-  font: inherit;
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: var(--accent-ink);
-  background: var(--accent);
-  border: 1px solid var(--accent);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  white-space: nowrap;
-  transition: filter 0.15s, transform 0.1s, opacity 0.15s;
-}
-
-.primary:hover:not(:disabled) {
-  filter: brightness(1.1);
-}
-
-.primary:active:not(:disabled) {
-  transform: translateY(1px);
-}
-
-.primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.primary:focus-visible {
-  outline: 3px solid var(--focus);
-  outline-offset: 2px;
-}
-
-/* ---------- States ---------- */
-.status {
-  margin: 0;
-  padding: 32px 24px;
-  text-align: center;
-  color: var(--muted);
+/* ---------- Filters ---------- */
+.filters {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: clamp(14px, 2.5vw, 20px);
   background: var(--surface);
-  border: 1px dashed var(--line);
+  border: 1px solid var(--line);
   border-radius: var(--radius);
 }
 
-.errorBox {
-  margin: 0;
-  padding: 12px 16px;
-  font-size: 0.92rem;
-  color: var(--danger);
-  background: var(--danger-tint);
-  border: 1px solid var(--danger);
-  border-radius: var(--radius-sm);
+.searchRow,
+.channelRow {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.searchSection {
-  margin: 1rem 0 1.25rem;
-}
-
-.searchLabel {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-size: 0.9rem;
+.filterLabel {
+  font-size: 0.9375rem;
   font-weight: 600;
 }
 
 .searchInput {
-  width: 100%;
-  max-width: 520px;
-  padding: 0.7rem 0.85rem;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  background: white;
-  font-size: 0.95rem;
-  outline: none;
+  max-width: 560px;
 }
 
-.searchInput:focus {
-  border-color: #6b7280;
-  box-shadow: 0 0 0 3px rgba(107, 114, 128, 0.15);
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
-.searchCount {
-  margin: 0.6rem 0 1rem;
-  font-size: 0.85rem;
-  color: #6b7280;
+/* ---------- States ---------- */
+.status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 40px 24px;
+  text-align: center;
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius);
 }
-/* ---------- Responsive ---------- */
-@media (max-width: 520px) {
+
+.errorBox {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px 16px;
+  font-size: 0.9375rem;
+  color: var(--danger);
+  background: var(--danger-tint);
+  border: 1px solid var(--danger-line);
+  border-radius: var(--radius-sm);
+}
+
+/* ---------- Small screens ---------- */
+@media (max-width: 480px) {
   .toolbar {
-    flex-direction: column;
-    align-items: stretch;
-    text-align: center;
-  }
-
-  .primary {
-    width: 100%;
-    min-height: 46px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .primary {
-    transition: none;
+    padding: 10px 10px 10px 14px;
   }
 }

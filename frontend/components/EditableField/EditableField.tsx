@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useId, useState } from "react";
+
+import { titleCase } from "@/lib/format";
 import styles from "./EditableField.module.css";
 
 interface EditableFieldProps {
@@ -11,9 +13,20 @@ interface EditableFieldProps {
   error?: string;
   type?: "text" | "number" | "date" | "select" | "boolean";
   options?: string[];
+  /** Return false to keep the editor open (e.g. the save failed). */
   onSave: (
     value: string | number | boolean | null,
-  ) => Promise<void>;
+  ) => Promise<boolean | void>;
+}
+
+function displayValue(
+  value: string | number | boolean | null,
+  type: EditableFieldProps["type"],
+): string {
+  if (value === null || value === "") return "—";
+  if (type === "boolean") return value === true || value === "true" ? "Yes" : "No";
+  if (type === "select") return titleCase(String(value));
+  return String(value);
 }
 
 export default function EditableField({
@@ -29,26 +42,30 @@ export default function EditableField({
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(value ?? ""));
   const [saving, setSaving] = useState(false);
+  const inputId = useId();
 
-  useEffect(() => {
+  // Reset the draft when the saved value changes (e.g. after a save or refresh).
+  const [prevValue, setPrevValue] = useState(value);
+  if (value !== prevValue) {
+    setPrevValue(value);
     setDraft(String(value ?? ""));
-  }, [value]);
+  }
+
+  function cancel() {
+    setDraft(String(value ?? ""));
+    setEditing(false);
+  }
 
   async function handleSave() {
     try {
       setSaving(true);
 
-      let parsedValue: string | number | boolean | null =
-        draft;
+      let parsedValue: string | number | boolean | null = draft;
 
       if (type === "number") {
-        parsedValue =
-          draft === "" ? null : Number(draft);
+        parsedValue = draft === "" ? null : Number(draft);
 
-        if (
-          parsedValue !== null &&
-          Number.isNaN(parsedValue)
-        ) {
+        if (parsedValue !== null && Number.isNaN(parsedValue)) {
           return;
         }
       }
@@ -61,83 +78,100 @@ export default function EditableField({
         parsedValue = null;
       }
 
-      await onSave(parsedValue);
-      setEditing(false);
+      const ok = await onSave(parsedValue);
+
+      if (ok !== false) {
+        setEditing(false);
+      }
     } finally {
       setSaving(false);
     }
   }
 
+  function handleKeyDown(event: React.KeyboardEvent) {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      cancel();
+    }
+
+    // Enter saves from text-like inputs (selects use Enter to open the list)
+    if (
+      event.key === "Enter" &&
+      (event.target as HTMLElement).tagName === "INPUT"
+    ) {
+      event.preventDefault();
+      handleSave();
+    }
+  }
+
   return (
-    <div className={styles.field}>
+    <div
+      className={`${styles.field} ${uncertain ? styles.fieldUncertain : ""}`}
+    >
       <div className={styles.header}>
-        <strong>{label}</strong>
+        <span className={styles.label}>{label}</span>
 
         <div className={styles.badges}>
-          {uncertain && (
-            <span className={styles.uncertain}>
-              Needs review
-            </span>
-          )}
-
-          {edited && (
-            <span className={styles.edited}>
-              Human edited
-            </span>
-          )}
+          {uncertain && <span className="pill" data-tone="warn">Check this</span>}
+          {edited && <span className="pill" data-tone="accent">Edited</span>}
         </div>
       </div>
 
       {editing ? (
-        <div className={styles.editor}>
+        <div className={styles.editor} onKeyDown={handleKeyDown}>
           {type === "select" ? (
             <select
+              id={inputId}
+              aria-label={label}
+              className="control"
               value={draft}
-              onChange={(event) =>
-                setDraft(event.target.value)
-              }
+              onChange={(event) => setDraft(event.target.value)}
+              autoFocus
             >
               {options.map((option) => (
                 <option key={option} value={option}>
-                  {option}
+                  {titleCase(option)}
                 </option>
               ))}
             </select>
           ) : type === "boolean" ? (
             <select
+              id={inputId}
+              aria-label={label}
+              className="control"
               value={draft}
-              onChange={(event) =>
-                setDraft(event.target.value)
-              }
+              onChange={(event) => setDraft(event.target.value)}
+              autoFocus
             >
-              <option value="true">true</option>
-              <option value="false">false</option>
+              <option value="true">Yes</option>
+              <option value="false">No</option>
             </select>
           ) : (
             <input
+              id={inputId}
+              aria-label={label}
+              className="control"
               type={type}
               value={draft}
-              onChange={(event) =>
-                setDraft(event.target.value)
-              }
+              onChange={(event) => setDraft(event.target.value)}
+              autoFocus
             />
           )}
 
           <div className={styles.actions}>
             <button
               type="button"
+              className="btn btn-primary btn-sm"
               onClick={handleSave}
               disabled={saving}
             >
-              {saving ? "Saving..." : "Save"}
+              {saving ? "Saving…" : "Save"}
             </button>
 
             <button
               type="button"
-              onClick={() => {
-                setDraft(String(value ?? ""));
-                setEditing(false);
-              }}
+              className="btn btn-sm"
+              onClick={cancel}
               disabled={saving}
             >
               Cancel
@@ -149,15 +183,17 @@ export default function EditableField({
           type="button"
           className={styles.value}
           onClick={() => setEditing(true)}
+          aria-label={`Edit ${label}: ${displayValue(value, type)}`}
         >
-          {value === null || value === ""
-            ? "—"
-            : String(value)}
+          <span>{displayValue(value, type)}</span>
+          <span className={styles.editHint} aria-hidden="true">
+            Edit
+          </span>
         </button>
       )}
 
       {error && (
-        <p className={styles.error}>
+        <p className={styles.error} role="alert">
           {error}
         </p>
       )}
