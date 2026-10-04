@@ -145,11 +145,12 @@ def update_record(record_id: str, updates: dict):
                     raw_output = item.result.get("raw_output") or {}
                     current_record = raw_output.get("record")
 
+                # No record at all (e.g. a "?" ticket that was never sent to
+                # the model): start from an empty base so the reviewer can
+                # fill every field by hand. Anything missing or invalid comes
+                # back as a per-field 422 error instead of a dead end.
                 if current_record is None:
-                    raise HTTPException(
-                        status_code=404,
-                        detail="Record result not available",
-                    )
+                    current_record = {}
 
                 updated_record = {
                     **current_record,
@@ -163,7 +164,11 @@ def update_record(record_id: str, updates: dict):
                 except ValidationError as error:
                     raise HTTPException(
                         status_code=422,
-                        detail=error.errors(),
+                        detail=error.errors(
+                            include_url=False,
+                            include_context=False,
+                            include_input=False,
+                        ),
                     )
 
                 item.result["record"] = validated_record.model_dump(
