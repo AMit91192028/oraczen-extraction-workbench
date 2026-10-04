@@ -8,8 +8,9 @@ import type {
   Ticket,
 } from "@/lib/types";
 
-import { updateRecord } from "@/lib/api";
+import { fieldErrorsFromError, updateRecord } from "@/lib/api";
 import EditableField from "../EditableField/EditableField";
+import ManualRecordForm from "../ManualrecordForm/ManualrecordForm";
 
 import styles from "./ReviewRecord.module.css";
 
@@ -87,6 +88,11 @@ export default function ReviewRecord({
   const record = result.result.record;
 
   if (!record) {
+    const rawRecord =
+      (result.result.raw_output?.record as
+        | Record<string, unknown>
+        | undefined) ?? null;
+
     return (
       <article className={styles.container}>
         <section className={styles.ticket}>
@@ -95,6 +101,12 @@ export default function ReviewRecord({
             {ticket.subject || "(No subject)"}
           </h4>
           <p className={styles.body}>{ticket.body}</p>
+
+          <div className={styles.metadata}>
+            <span>{ticket.from_email}</span>
+            <span>{ticket.channel}</span>
+            <span>{ticket.received_at}</span>
+          </div>
         </section>
 
         <section className={styles.result}>
@@ -111,6 +123,23 @@ export default function ReviewRecord({
           {result.result.validation_error && (
             <pre>{result.result.validation_error}</pre>
           )}
+
+          <ManualRecordForm
+            recordId={result.record_id}
+            fields={FIELDS}
+            rawRecord={rawRecord}
+            onSaved={(savedRecord, humanEditedFields) =>
+              onUpdated({
+                ...result,
+                status: "done",
+                result: {
+                  ...result.result,
+                  record: savedRecord,
+                  human_edited_fields: humanEditedFields,
+                },
+              })
+            }
+          />
         </section>
       </article>
     );
@@ -136,12 +165,14 @@ export default function ReviewRecord({
         },
       });
     } catch (error) {
+      const fieldErrors = fieldErrorsFromError(error);
+
       setErrors((current) => ({
         ...current,
         [field]:
-          error instanceof Error
-            ? error.message
-            : "Failed to save field",
+          fieldErrors[field] ??
+          fieldErrors._form ??
+          "Failed to save field",
       }));
     }
   }
