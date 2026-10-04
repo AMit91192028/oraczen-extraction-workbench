@@ -77,3 +77,11 @@ I chose polling because it was simpler to implement with the HTTP endpoints I al
 The main cost of polling is that the frontend makes repeated requests while the job is running. Updates can also be slightly delayed depending on the polling interval.
 
 For this assignment, I felt that trade-off was reasonable because the implementation stays simple while still giving the reviewer automatic progress updates and partial results.
+
+**## 6. Frontend testing**
+
+If I added a frontend test, I would test the main review workflow rather than testing every visual detail.
+
+The main test I would add is for the results page. It would render a result containing a `needs_review` record and verify that the review information is shown to the user. I would also test the result filter so that selecting `Needs review` only shows records that need review, while selecting `Human edited` only shows records where a human has changed at least one field.
+
+I would also test that editing a field and saving it calls the update API and that the edited field is shown as human-edited afterward. This would cover the most important user interaction in the review workflow.
