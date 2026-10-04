@@ -3,10 +3,15 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 
-import { getExportUrl, getJob, getJobResults } from "@/lib/api";
+import {
+  getExportUrl,
+  getJob,
+  getJobResults,
+  getTickets,
+} from "@/lib/api";
 import ReviewRecord from "@/components/ReviewRecord/ReviewRecord";
 import type { Job, JobResult, Ticket } from "@/lib/types";
-import { getTickets } from "@/lib/api";
+import styles from "./page.module.css";
 
 export default function JobPage() {
   const params = useParams();
@@ -16,6 +21,10 @@ export default function JobPage() {
   const [results, setResults] = useState<JobResult[]>([]);
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [error, setError] = useState<string | null>(null);
+
+  const [resultFilter, setResultFilter] = useState<
+    "all" | "needs_review" | "human_edited"
+  >("all");
 
   useEffect(() => {
     let cancelled = false;
@@ -100,7 +109,21 @@ export default function JobPage() {
       ? 0
       : Math.round((completed / total) * 100);
 
-  const sortedResults = [...results].sort(
+  const filteredResults = results.filter((result) => {
+    if (resultFilter === "needs_review") {
+      return result.status === "needs_review";
+    }
+
+    if (resultFilter === "human_edited") {
+      return (
+        (result.result.human_edited_fields ?? []).length > 0
+      );
+    }
+
+    return true;
+  });
+
+  const sortedResults = [...filteredResults].sort(
     (a, b) => {
       if (
         a.status === "needs_review" &&
@@ -121,21 +144,21 @@ export default function JobPage() {
   );
 
   function formatStatus(status: string) {
-  switch (status) {
-    case "needs_review":
-      return "Needs review";
-    case "running":
-      return "Running";
-    case "queued":
-      return "Queued";
-    case "done":
-      return "Done";
-    case "failed":
-      return "Failed";
-    default:
-      return status;
+    switch (status) {
+      case "needs_review":
+        return "Needs review";
+      case "running":
+        return "Running";
+      case "queued":
+        return "Queued";
+      case "done":
+        return "Done";
+      case "failed":
+        return "Failed";
+      default:
+        return status;
+    }
   }
-}
 
   return (
     <main>
@@ -145,12 +168,12 @@ export default function JobPage() {
         Job ID: <code>{job.job_id}</code>
       </p>
 
-        <div>
+      <div>
         <a href={getExportUrl(job.job_id)} download>
-            Export CSV
+          Export CSV
         </a>
-        </div>
-        
+      </div>
+
       <section>
         <h2>Progress</h2>
 
@@ -174,46 +197,93 @@ export default function JobPage() {
       </section>
 
       <section>
-  <h2>Ticket status</h2>
+        <h2>Ticket status</h2>
 
-  <div>
-    {job.items.map((item) => {
-      const ticket = tickets.find((ticket) => ticket.id === item.ticket_id);
+        <div>
+          {job.items.map((item) => {
+            const ticket = tickets.find(
+              (ticket) => ticket.id === item.ticket_id,
+            );
 
-      return (
-        <div key={item.ticket_id}>
-          <strong>{ticket?.subject || "(No subject)"}</strong>
-         <span> — {formatStatus(item.status)}</span>
+            return (
+              <div key={item.ticket_id}>
+                <strong>
+                  {ticket?.subject || "(No subject)"}
+                </strong>
+
+                <span>
+                  {" "}
+                  — {formatStatus(item.status)}
+                </span>
+              </div>
+            );
+          })}
         </div>
-      );
-    })}
-  </div>
-</section>
+      </section>
 
-<section>
-  <h2>Results</h2>
+      <section>
+        <h2>Results</h2>
 
-  {sortedResults.length === 0 ? (
-    <p>No results yet...</p>
-  ) : (
-    <div>
-      {sortedResults.map((result) => {
-        const ticket = tickets.find((item) => item.id === result.ticket_id);
+        <div className={styles.resultFilter}>
+          <label
+            htmlFor="result-filter"
+            className={styles.resultFilterLabel}
+          >
+            Show:
+          </label>
 
-        if (!ticket) return null;
+          <select
+            id="result-filter"
+            className={styles.resultFilterSelect}
+            value={resultFilter}
+            onChange={(event) =>
+              setResultFilter(
+                event.target.value as
+                  | "all"
+                  | "needs_review"
+                  | "human_edited",
+              )
+            }
+          >
+            <option value="all">
+              All results
+            </option>
 
-        return (
-          <ReviewRecord
-            key={result.record_id}
-            ticket={ticket}
-            result={result}
-            onUpdated={handleResultUpdated}
-          />
-        );
-      })}
-    </div>
-  )}
-</section>
+            <option value="needs_review">
+              Needs review
+            </option>
+
+            <option value="human_edited">
+              Human edited
+            </option>
+          </select>
+        </div>
+
+        {sortedResults.length === 0 ? (
+          <p>No results yet...</p>
+        ) : (
+          <div>
+            {sortedResults.map((result) => {
+              const ticket = tickets.find(
+                (item) => item.id === result.ticket_id,
+              );
+
+              if (!ticket) {
+                return null;
+              }
+
+              return (
+                <ReviewRecord
+                  key={result.record_id}
+                  ticket={ticket}
+                  result={result}
+                  onUpdated={handleResultUpdated}
+                />
+              );
+            })}
+          </div>
+        )}
+      </section>
     </main>
   );
 }
